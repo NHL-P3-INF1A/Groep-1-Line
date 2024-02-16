@@ -25,8 +25,6 @@ void setup() {
   pinMode(motorA2, OUTPUT);
   pinMode(motorB1, OUTPUT);
   pinMode(motorB2, OUTPUT);
-
-  Serial.begin(9600);
 }
 
 /*///////////////// follow line loop /////////////////*/
@@ -48,7 +46,17 @@ void loop() {
   bool lessFarRightOnLine = sensorValues[5] > lineThreshold;
   bool evenlessFarRightOnLine = sensorValues[4] > lineThreshold;
 
-  if (farLeftOnLine) {
+  // Check if sensors 3 and 4 are active
+  bool sensors3And4Active = sensorValues[3] > lineThreshold && sensorValues[4] > lineThreshold;
+
+  // NEW SECTION: Check for cross-section
+  bool allCenterSensorsActive = lessFarLeftOnLine && evenlessFarLeftOnLine && evenlessFarRightOnLine && lessFarRightOnLine;
+
+  if (allCenterSensorsActive && !sensors3And4Active) {
+    // Cross-section detected - go straight
+    analogWrite(motorA1, baseSpeed);
+    analogWrite(motorB1, baseSpeed);
+  } else if (farLeftOnLine) {
     // Hard right turn
     analogWrite(motorA1, baseSpeed - hardTurnAdjustment); // Even slower left motor
     analogWrite(motorB1, baseSpeed - 50);
@@ -58,12 +66,12 @@ void loop() {
     analogWrite(motorB1, baseSpeed - 35);
   } else if (evenlessFarLeftOnLine) {
     // Veer left
-    analogWrite(motorA1, baseSpeed); 
-    analogWrite(motorB1, baseSpeed - veerAdjustment); 
+    analogWrite(motorA1, baseSpeed);
+    analogWrite(motorB1, baseSpeed - veerAdjustment);
   } else if (evenlessFarRightOnLine) {
     // Veer right
-    analogWrite(motorA1, baseSpeed - veerAdjustment); 
-    analogWrite(motorB1, baseSpeed); 
+    analogWrite(motorA1, baseSpeed - veerAdjustment);
+    analogWrite(motorB1, baseSpeed);
   } else if (lessFarRightOnLine) {
     // Strong left turn
     analogWrite(motorA1, baseSpeed - 35);
@@ -72,17 +80,18 @@ void loop() {
     // Hard left turn
     analogWrite(motorA1, baseSpeed - 50);
     analogWrite(motorB1, baseSpeed - hardTurnAdjustment * 2);
-  } else if (extremeLeft) {
+  }
+
+  if (extremeLeft && !sensors3And4Active) {
     // Lost the line to the extreme left - rotate heavy
     analogWrite(motorA1, baseSpeed - heavyTurnAdjustment);
     analogWrite(motorB1, baseSpeed);
-  } else if (extremeRight) {
+  } else if (extremeRight && !sensors3And4Active) {
     // Lost the line to the extreme right - rotate heavy
     analogWrite(motorA1, baseSpeed);
     analogWrite(motorB1, baseSpeed - heavyTurnAdjustment);
   }
 
-  analogWrite(motorA2, 0);
-  analogWrite(motorB2, 0);
+  digitalWrite(motorA2, LOW);
+  digitalWrite(motorB2, LOW);
 }
-
