@@ -16,6 +16,7 @@ int veerAdjustment = 25;
 
 // Base speed of the robot
 const int baseSpeed = 255;
+const int startSpeed = 200; 
 
 /*///////////////// setup /////////////////*/
 
@@ -25,6 +26,14 @@ void setup() {
   pinMode(motorA2, OUTPUT);
   pinMode(motorB1, OUTPUT);
   pinMode(motorB2, OUTPUT);
+  
+  //Auto rijdt door voor 0.7 seconden en daarna vuurt die weer de normale code uit.
+  analogWrite(motorA1, startSpeed);
+  analogWrite(motorB1, startSpeed);
+  
+  delay(700);
+  analogWrite(motorA1, LOW);
+  analogWrite(motorB1, LOW);
 }
 
 /*///////////////// follow line loop /////////////////*/
