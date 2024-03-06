@@ -73,14 +73,14 @@ for (int i = 0; i < 8; i++)
 }
 
 // Determine if sensors are on the line
-bool extremeLeft = sensorValues[0] > lineThreshold;
-bool farLeftOnLine = sensorValues[1] > lineThreshold;
-bool lessFarLeftOnLine = sensorValues[2] > lineThreshold;
-bool evenlessFarLeftOnLine = sensorValues[3] > lineThreshold;
-bool extremeRight = sensorValues[7] > lineThreshold;
-bool farRightOnLine = sensorValues[6] > lineThreshold;
-bool lessFarRightOnLine = sensorValues[5] > lineThreshold;
-bool evenlessFarRightOnLine = sensorValues[4] > lineThreshold;
+  bool extremeLeft = sensorValues[0] > lineThreshold;
+  bool farLeftOnLine = sensorValues[1] > lineThreshold;
+  bool lessFarLeftOnLine = sensorValues[2] > lineThreshold;
+  bool evenlessFarLeftOnLine = sensorValues[3] > lineThreshold;
+  bool extremeRight = sensorValues[7] > lineThreshold;
+  bool farRightOnLine = sensorValues[6] > lineThreshold;
+  bool lessFarRightOnLine = sensorValues[5] > lineThreshold;
+  bool evenlessFarRightOnLine = sensorValues[4] > lineThreshold;
 {
 
   blacksquare();
