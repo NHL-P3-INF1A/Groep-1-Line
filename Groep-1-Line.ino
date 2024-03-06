@@ -1,3 +1,5 @@
+#include <Arduino.h>
+
 /*///////////////// define variables /////////////////*/
 
 const int motorA1 = 6;
@@ -15,8 +17,37 @@ int strongTurnAdjustment = 125;
 int veerAdjustment = 25;
 
 // Base speed of the robot
-const int baseSpeed = 255;
+const int baseSpeedLeft = 255;
+const int baseSpeedRight = 255;
 const int startSpeed = 200; 
+
+/*///////////////// functions /////////////////*/
+
+void checkIfOnBlackSquare() {
+  // Define the missing variables
+  bool evenlessFarLeftOnLine;
+  bool evenlessFarRightOnLine;
+  bool lessFarLeftOnLine;
+  bool lessFarRightOnLine;
+  bool farLeftOnLine;
+  bool farRightOnLine;
+  bool extremeLeft;
+  bool extremeRight;
+  int baseSpeed = 255;
+  int delayTime = 1000;
+
+  if ((evenlessFarLeftOnLine + evenlessFarRightOnLine + lessFarLeftOnLine + lessFarRightOnLine + farLeftOnLine + farRightOnLine + extremeLeft + extremeRight) >= 3)
+  {
+    analogWrite(motorA1, baseSpeed);
+    analogWrite(motorB1, baseSpeed);
+    delay(delayTime); // Add missing parentheses and semicolon
+    if ((evenlessFarLeftOnLine + evenlessFarRightOnLine + lessFarLeftOnLine + lessFarRightOnLine + farLeftOnLine + farRightOnLine + extremeLeft + extremeRight) >= 3)
+    {
+      analogWrite(motorA1, 0);
+      analogWrite(motorB1, 0);
+    }
+  } 
+}
 
 /*///////////////// setup /////////////////*/
 
@@ -26,15 +57,18 @@ void setup() {
   pinMode(motorA2, OUTPUT);
   pinMode(motorB1, OUTPUT);
   pinMode(motorB2, OUTPUT);
-  
-  //Auto rijdt door voor 0.7 seconden en daarna vuurt die weer de normale code uit.
-  analogWrite(motorA1, startSpeed);
-  analogWrite(motorB1, startSpeed);
-  
-  delay(700);
-  analogWrite(motorA1, LOW);
-  analogWrite(motorB1, LOW);
+
+  // Initialize line sensor pins as inputs
+  pinMode (A0, INPUT);
+  pinMode (A1, INPUT);
+  pinMode (A2, INPUT);
+  pinMode (A3, INPUT);
+  pinMode (A4, INPUT);
+  pinMode (A5, INPUT);
+  pinMode (A6, INPUT);
+  pinMode (A7, INPUT);
 }
+
 
 /*///////////////// follow line loop /////////////////*/
 
@@ -63,43 +97,45 @@ void loop() {
 
   if (allCenterSensorsActive && !sensors3And4Active) {
     // Cross-section detected - go straight
-    analogWrite(motorA1, baseSpeed);
-    analogWrite(motorB1, baseSpeed);
+    analogWrite(motorA1, baseSpeedLeft);
+    analogWrite(motorB1, baseSpeedRight);
   } else if (farLeftOnLine) {
     // Hard right turn
-    analogWrite(motorA1, baseSpeed - hardTurnAdjustment); // Even slower left motor
-    analogWrite(motorB1, baseSpeed - 50);
+    analogWrite(motorA1, baseSpeedLeft - hardTurnAdjustment); // Even slower left motor
+    analogWrite(motorB1, baseSpeedRight - 50);
   } else if (lessFarLeftOnLine) {
     // Strong right turn
-    analogWrite(motorA1, baseSpeed - strongTurnAdjustment);
-    analogWrite(motorB1, baseSpeed - 35);
+    analogWrite(motorA1, baseSpeedLeft - strongTurnAdjustment);
+    analogWrite(motorB1, baseSpeedRight - 35);
   } else if (evenlessFarLeftOnLine) {
     // Veer left
-    analogWrite(motorA1, baseSpeed);
-    analogWrite(motorB1, baseSpeed - veerAdjustment);
+    analogWrite(motorA1, baseSpeedLeft);
+    analogWrite(motorB1, baseSpeedRight - veerAdjustment);
   } else if (evenlessFarRightOnLine) {
     // Veer right
-    analogWrite(motorA1, baseSpeed - veerAdjustment);
-    analogWrite(motorB1, baseSpeed);
+    analogWrite(motorA1, baseSpeedLeft - veerAdjustment);
+    analogWrite(motorB1, baseSpeedRight);
   } else if (lessFarRightOnLine) {
     // Strong left turn
-    analogWrite(motorA1, baseSpeed - 35);
-    analogWrite(motorB1, baseSpeed - strongTurnAdjustment * 2);
+    analogWrite(motorA1, baseSpeedLeft - 35);
+    analogWrite(motorB1, baseSpeedRight - strongTurnAdjustment * 2);
   } else if (farRightOnLine) {
     // Hard left turn
-    analogWrite(motorA1, baseSpeed - 50);
-    analogWrite(motorB1, baseSpeed - hardTurnAdjustment * 2);
+    analogWrite(motorA1, baseSpeedLeft - 50);
+    analogWrite(motorB1, baseSpeedRight - hardTurnAdjustment * 2);
   }
 
   if (extremeLeft && !sensors3And4Active) {
     // Lost the line to the extreme left - rotate heavy
-    analogWrite(motorA1, baseSpeed - heavyTurnAdjustment);
-    analogWrite(motorB1, baseSpeed);
+    analogWrite(motorA1, baseSpeedLeft - heavyTurnAdjustment);
+    analogWrite(motorB1, baseSpeedRight);
   } else if (extremeRight && !sensors3And4Active) {
     // Lost the line to the extreme right - rotate heavy
-    analogWrite(motorA1, baseSpeed);
-    analogWrite(motorB1, baseSpeed - heavyTurnAdjustment);
+    analogWrite(motorA1, baseSpeedLeft);
+    analogWrite(motorB1, baseSpeedRight - heavyTurnAdjustment);
   }
+
+  checkIfOnBlackSquare();
 
   digitalWrite(motorA2, LOW);
   digitalWrite(motorB2, LOW);
