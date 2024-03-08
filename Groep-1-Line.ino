@@ -8,32 +8,22 @@ const int motorB1 = 10;
 const int motorB2 = 11;
 
 const int linePins[] = {A0, A1, A2, A3, A4, A5, A6, A7};
+const int SENSOR_COUNT = 8;
 
 const int lineThreshold = 700;
-
 const int gripperPin = 5;
 
-int heavyTurnAdjustment = 255;
-int hardTurnAdjustment = 200;
-
-int strongTurnAdjustment = 150;
-int veerAdjustment = 25;
-
-// Base speed of the robot
+const int MAX_TURN_ADJUSTMENT = 255;
+const int HARD_TURN_ADJUSTMENT = 200;
+const int STRONG_TURN_ADJUSTMENT = 150;
+const int VEER_ADJUSTMENT = 25;
 const int baseSpeedLeft = 240;
 const int baseSpeedRight = 255;
 const int startSpeed = 200;
 
-int delayTime = 1000;
-
-bool endOfLine = false;
-
-const int SENSOR_COUNT = 8;
 int maxValues[SENSOR_COUNT] = {0};
 int minValues[SENSOR_COUNT] = {1023};
 int calibrationThreshold[SENSOR_COUNT];
-
-bool endOfBlackSquare = analogRead(A4) > lineThreshold;
 
 /*///////////////// Function ///////////////*/
 
@@ -68,6 +58,10 @@ void calibrateSensors()
   }
 }
 
+void startSetup() {
+
+}
+
 void gripperOpen()
 {
   moveGripper(1700);
@@ -89,6 +83,36 @@ void moveGripper(int pulseDuration)
   }
 }
 
+void hardRightTurn() {
+  analogWrite(motorA1, baseSpeedLeft - MAX_TURN_ADJUSTMENT); 
+  analogWrite(motorB1, baseSpeedRight); 
+}
+
+void strongRightTurn() {
+  analogWrite(motorA1, baseSpeedLeft - STRONG_TURN_ADJUSTMENT);
+  analogWrite(motorB1, baseSpeedRight - STRONG_TURN_ADJUSTMENT / 2); 
+}
+
+void veerRight() {
+  analogWrite(motorA1, baseSpeedLeft - VEER_ADJUSTMENT);
+  analogWrite(motorB1, baseSpeedRight);
+}
+
+void hardLeftTurn() {
+  analogWrite(motorA1, baseSpeedLeft); 
+  analogWrite(motorB1, baseSpeedRight - MAX_TURN_ADJUSTMENT); 
+}
+
+void strongLeftTurn() {
+  analogWrite(motorA1, baseSpeedLeft - STRONG_TURN_ADJUSTMENT);
+  analogWrite(motorB1, baseSpeedRight - STRONG_TURN_ADJUSTMENT / 2); 
+}
+
+void veerLeft() {
+  analogWrite(motorA1, baseSpeedLeft);
+  analogWrite(motorB1, baseSpeedRight - VEER_ADJUSTMENT);
+}
+
 /*///////////////// setup /////////////////*/
 
 void setup()
@@ -101,14 +125,9 @@ void setup()
   pinMode(motorB2, OUTPUT);
 
   // Initialize line sensor pins as inputs
-  pinMode(A0, INPUT);
-  pinMode(A1, INPUT);
-  pinMode(A2, INPUT);
-  pinMode(A3, INPUT);
-  pinMode(A4, INPUT);
-  pinMode(A5, INPUT);
-  pinMode(A6, INPUT);
-  pinMode(A7, INPUT);
+  for (int i = 0; i < SENSOR_COUNT; i++) {
+    pinMode(linePins[i], INPUT);
+  }
 
   calibrateSensors();
 }
@@ -117,67 +136,32 @@ void setup()
 
 void loop()
 {
-  bool extremeLeft = analogRead(A0) > lineThreshold;
-  bool farLeftOnLine = analogRead(A1) > lineThreshold;
-  bool lessFarLeftOnLine = analogRead(A2) > lineThreshold;
-  bool evenlessFarLeftOnLine = analogRead(A3) > lineThreshold;
-  bool extremeRight = analogRead(A7) > lineThreshold;
-  bool farRightOnLine = analogRead(A6) > lineThreshold;
-  bool lessFarRightOnLine = analogRead(A5) > lineThreshold;
-  bool evenlessFarRightOnLine = analogRead(A4) > lineThreshold;
+  int sensorReadings[SENSOR_COUNT]; 
 
-  if (farLeftOnLine)
-  {
-    // Hard right turn
-    analogWrite(motorA1, baseSpeedLeft - hardTurnAdjustment); // Even slower left motor
-    analogWrite(motorB1, baseSpeedRight - 50);
+  // Read sensor values into array
+  for (int i = 0; i < SENSOR_COUNT; i++) {
+    sensorReadings[i] = analogRead(linePins[i]);
   }
-  else if (lessFarLeftOnLine)
-  {
-    // Strong right turn
-    analogWrite(motorA1, baseSpeedLeft - strongTurnAdjustment);
-    analogWrite(motorB1, baseSpeedRight - 35);
-  }
-  else if (evenlessFarLeftOnLine)
-  {
-    // Veer left
-    analogWrite(motorA1, baseSpeedLeft);
-    analogWrite(motorB1, baseSpeedRight - veerAdjustment);
-  }
-  else if (evenlessFarRightOnLine)
-  {
-    // Veer right
-    analogWrite(motorA1, baseSpeedLeft - veerAdjustment);
-    analogWrite(motorB1, baseSpeedRight);
-  }
-  else if (lessFarRightOnLine)
-  {
-    // Strong left turn
-    analogWrite(motorA1, baseSpeedLeft - 35);
-    analogWrite(motorB1, baseSpeedRight);
-  }
-  else if (farRightOnLine)
-  {
-    // Hard left turn
-    analogWrite(motorA1, baseSpeedLeft - 50);
-    analogWrite(motorB1, baseSpeedRight);
-  }
-  else if (extremeLeft)
-  {
-    // Hard right turn
-    analogWrite(motorA1, 150);
-    analogWrite(motorB1, baseSpeedRight - 50);
-  }
-  else if (extremeRight)
-  {
-    // Hard left turn
-    analogWrite(motorA1, baseSpeedLeft - 50);
-    analogWrite(motorB1, 150);
-  }
-  else
-  {
-    // Move forward
-    analogWrite(motorA1, baseSpeedLeft);
-    analogWrite(motorB1, baseSpeedRight);
+
+  // Line Following Logic
+  if (sensorReadings[0] > lineThreshold) {
+    hardRightTurn();  // Turn hard right
+  } else if (sensorReadings[7] > lineThreshold) {
+    hardLeftTurn();
+  } else if (sensorReadings[1] > lineThreshold) { 
+    hardRightTurn();
+  } else if (sensorReadings[2] > lineThreshold) {
+    strongRightTurn();
+  } else if (sensorReadings[3] > lineThreshold) { 
+    veerRight(); 
+  } else if (sensorReadings[4] > lineThreshold) {  
+    veerLeft(); 
+  } else if (sensorReadings[5] > lineThreshold) { 
+    strongLeftTurn(); 
+  } else if (sensorReadings[6] > lineThreshold) { 
+    hardLeftTurn(); 
+  } else {
+    analogWrite(motorA1, baseSpeedLeft); 
+    analogWrite(motorB1, baseSpeedRight); 
   }
 }
