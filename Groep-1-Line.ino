@@ -15,29 +15,34 @@ int veerAdjustment = 25;
 
 // Base speed of the robot
 const int baseSpeed = 255;
-const int startSpeed = 200; 
+const int startSpeed = 210; 
 
 /*///////////////// setup /////////////////*/
 
 void setup() {
   // Initialize motor control pins as outputs
+  gripperOpen();
   pinMode(motorA1, OUTPUT);
   pinMode(motorA2, OUTPUT);
   pinMode(motorB1, OUTPUT);
   pinMode(motorB2, OUTPUT);
   pinMode(gripperPin, OUTPUT);
-  
-  
-  //Auto rijdt door voor 0.7 seconden en daarna vuurt die weer de normale code uit.
+
   analogWrite(motorA1, startSpeed);
   analogWrite(motorB1, startSpeed);
-
-  delay(700);
-  analogWrite(motorA1, LOW);
-  analogWrite(motorB1, LOW);
-
-  delay(1000);
+  digitalWrite(motorA2, LOW);
+  digitalWrite(motorB2, LOW);
+  delay(1750);
+  analogWrite(motorA1, 0);
+  analogWrite(motorB1, 0);
   gripperClose();
+  delay(500);
+  analogWrite(motorA2, startSpeed);
+  analogWrite(motorB1, startSpeed);
+  delay(500);
+  analogWrite(motorA2, 0);
+  analogWrite(motorB2, 0);
+  delay(1000);
 }
 
 void gripperOpen()
