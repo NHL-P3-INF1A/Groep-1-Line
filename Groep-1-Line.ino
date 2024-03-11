@@ -1,78 +1,70 @@
-#include <Arduino.h>
-
 /*///////////////// define variables /////////////////*/
-
 const int motorA1 = 6;
 const int motorA2 = 9;
 const int motorB1 = 10;
 const int motorB2 = 11;
-
 const int linePins[] = {A0, A1, A2, A3, A4, A5, A6, A7};
 
+const int gripperPin = 5;
+
 const int lineThreshold = 700;
-
 int heavyTurnAdjustment = 255;
-int hardTurnAdjustment = 200;
-
-int strongTurnAdjustment = 150;
+int hardTurnAdjustment = 175;
+int strongTurnAdjustment = 125;
 int veerAdjustment = 25;
 
 // Base speed of the robot
-const int baseSpeedLeft = 255;
-const int baseSpeedRight = 255;
-
-int delayTime = 1000;
-
-bool endOfLine = false;
+const int baseSpeed = 255;
+const int startSpeed = 200; 
 
 /*///////////////// setup /////////////////*/
 
-void setup()
-{
+void setup() {
   // Initialize motor control pins as outputs
   pinMode(motorA1, OUTPUT);
   pinMode(motorA2, OUTPUT);
   pinMode(motorB1, OUTPUT);
   pinMode(motorB2, OUTPUT);
+  pinMode(gripperPin, OUTPUT);
+  
+  
+  //Auto rijdt door voor 0.7 seconden en daarna vuurt die weer de normale code uit.
+  analogWrite(motorA1, startSpeed);
+  analogWrite(motorB1, startSpeed);
 
-  // Initialize line sensor pins as inputs
-  pinMode(A0, INPUT);
-  pinMode(A1, INPUT);
-  pinMode(A2, INPUT);
-  pinMode(A3, INPUT);
-  pinMode(A4, INPUT);
-  pinMode(A5, INPUT);
-  pinMode(A6, INPUT);
-  pinMode(A7, INPUT);
+  delay(700);
+  analogWrite(motorA1, LOW);
+  analogWrite(motorB1, LOW);
+
+  delay(1000);
+  gripperClose();
 }
-/*///////////////// Function ///////////////*/
 
-void blacksquare()
+void gripperOpen()
+{moveGripper(1700);}
+
+void gripperClose()
+{moveGripper(1050);}
+
+void moveGripper(int pulseDuration)
 {
-  if ((evenlessFarLeftOnLine + evenlessFarRightOnLine + lessFarLeftOnLine + lessFarRightOnLine + farLeftOnLine + farRightOnLine + extremeLeft + extremeRight) >= 3)
+  for(int i = 0; i < 10; i++)
   {
-    analogWrite(motorA1, baseSpeedLeft);
-    analogWrite(motorB1, baseSpeedRight);
-    delay(delayTime);
-    if ((evenlessFarLeftOnLine + evenlessFarRightOnLine + lessFarLeftOnLine + lessFarRightOnLine + farLeftOnLine + farRightOnLine + extremeLeft + extremeRight) >= 3)
-    {
-      endOfLine = true;
-    }
+    delay(20);
+    digitalWrite(gripperPin, HIGH);
+    delayMicroseconds(pulseDuration);
+    digitalWrite(gripperPin, LOW);
   }
 }
-
 /*///////////////// follow line loop /////////////////*/
-
-void loop()
-
-// Read sensor values
-int sensorValues[8];
-for (int i = 0; i < 8; i++)
-{
-  sensorValues[i] = analogRead(linePins[i]);
-}
-
-// Determine if sensors are on the line
+void loop() {
+  //Read sensor values
+  int sensorValues[8];
+  for (int i = 0; i < 8; i++) {
+    sensorValues[i] = analogRead(linePins[i]);
+  }
+  
+  // Determine if sensors are on the line
   bool extremeLeft = sensorValues[0] > lineThreshold;
   bool farLeftOnLine = sensorValues[1] > lineThreshold;
   bool lessFarLeftOnLine = sensorValues[2] > lineThreshold;
@@ -81,60 +73,50 @@ for (int i = 0; i < 8; i++)
   bool farRightOnLine = sensorValues[6] > lineThreshold;
   bool lessFarRightOnLine = sensorValues[5] > lineThreshold;
   bool evenlessFarRightOnLine = sensorValues[4] > lineThreshold;
-{
-
-  blacksquare();
-  if (endOfLine)
-  {
-    analogWrite(motorA1, 0);
-    analogWrite(motorB1, 0);
-  }
+  // Check if sensors 3 and 4 are active
+  bool sensors3And4Active = sensorValues[3] > lineThreshold && sensorValues[4] > lineThreshold;
+  // NEW SECTION: Check for cross-section
+  bool allCenterSensorsActive = lessFarLeftOnLine && evenlessFarLeftOnLine && evenlessFarRightOnLine && lessFarRightOnLine;
   
-
-  // Determine motor speeds
-  if (farLeftOnLine)
-  {
+  if (allCenterSensorsActive && !sensors3And4Active) {
+    // Cross-section detected - go straight
+    analogWrite(motorA1, baseSpeed);
+    analogWrite(motorB1, baseSpeed);
+  } else if (farLeftOnLine) {
     // Hard right turn
-    analogWrite(motorA1, baseSpeedLeft - hardTurnAdjustment);
-    analogWrite(motorB1, baseSpeedRight);
-  }
-  else if (lessFarLeftOnLine)
-  {
+    analogWrite(motorA1, baseSpeed - hardTurnAdjustment); // Even slower left motor
+    analogWrite(motorB1, baseSpeed - 50);
+  } else if (lessFarLeftOnLine) {
     // Strong right turn
-    analogWrite(motorA1, baseSpeedLeft - strongTurnAdjustment);
-    analogWrite(motorB1, baseSpeedRight);
-  }
-  else if (evenlessFarLeftOnLine)
-  {
+    analogWrite(motorA1, baseSpeed - strongTurnAdjustment);
+    analogWrite(motorB1, baseSpeed - 35);
+  } else if (evenlessFarLeftOnLine) {
     // Veer left
-    analogWrite(motorA1, baseSpeedLeft - veerAdjustment);
-    analogWrite(motorB1, baseSpeedRight);
-  }
-  else if (evenlessFarRightOnLine)
-  {
+    analogWrite(motorA1, baseSpeed);
+    analogWrite(motorB1, baseSpeed - veerAdjustment);
+  } else if (evenlessFarRightOnLine) {
     // Veer right
-    analogWrite(motorA1, baseSpeedLeft);
-    analogWrite(motorB1, baseSpeedRight - veerAdjustment);
-  }
-  else if (lessFarRightOnLine)
-  {
+    analogWrite(motorA1, baseSpeed - veerAdjustment);
+    analogWrite(motorB1, baseSpeed);
+  } else if (lessFarRightOnLine) {
     // Strong left turn
-    analogWrite(motorA1, baseSpeedLeft);
-    analogWrite(motorB1, baseSpeedRight - strongTurnAdjustment);
-  }
-  else if (farRightOnLine)
-  {
+    analogWrite(motorA1, baseSpeed - 35);
+    analogWrite(motorB1, baseSpeed - strongTurnAdjustment * 2);
+  } else if (farRightOnLine) {
     // Hard left turn
-    analogWrite(motorA1, baseSpeedLeft);
-    analogWrite(motorB1, baseSpeedRight - hardTurnAdjustment);
+    analogWrite(motorA1, baseSpeed - 50);
+    analogWrite(motorB1, baseSpeed - hardTurnAdjustment * 2);
   }
-  else
-  {
-    // Drive straight
-    analogWrite(motorA1, baseSpeedLeft);
-    analogWrite(motorB1, baseSpeedRight);
+  if (extremeLeft && !sensors3And4Active) {
+    // Lost the line to the extreme left - rotate heavy
+    analogWrite(motorA1, baseSpeed - heavyTurnAdjustment);
+    analogWrite(motorB1, baseSpeed);
+  } else if (extremeRight && !sensors3And4Active) {
+    // Lost the line to the extreme right - rotate heavy
+    analogWrite(motorA1, baseSpeed);
+    analogWrite(motorB1, baseSpeed - heavyTurnAdjustment);
   }
-
   digitalWrite(motorA2, LOW);
   digitalWrite(motorB2, LOW);
+
 }
