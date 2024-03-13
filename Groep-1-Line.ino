@@ -82,7 +82,7 @@ void loop() {
   bool sensors3And4Active = sensorValues[3] > lineThreshold && sensorValues[4] > lineThreshold;
   // NEW SECTION: Check for cross-section
   bool allCenterSensorsActive = lessFarLeftOnLine && evenlessFarLeftOnLine && evenlessFarRightOnLine && lessFarRightOnLine;
-  
+
   if (allCenterSensorsActive && !sensors3And4Active) {
     // Cross-section detected - go straight
     analogWrite(motorA1, baseSpeed);
@@ -120,6 +120,14 @@ void loop() {
     // Lost the line to the extreme right - rotate heavy
     analogWrite(motorA1, baseSpeed);
     analogWrite(motorB1, baseSpeed - heavyTurnAdjustment);
+  }
+  else if(allCenterSensorsActive){
+    digitalWrite(motorA2, baseSpeed);
+    digitalWrite(motorB2, baseSpeed);
+    delay(200);
+    if(allCenterSensorsActive){
+    analogWrite(motorA1, 0);
+    analogWrite(motorB1, 0);}
   }
   digitalWrite(motorA2, LOW);
   digitalWrite(motorB2, LOW);
