@@ -1,33 +1,47 @@
-/*///////////////// define variables /////////////////*/
-const int motorA1 = 6;
-const int motorA2 = 9;
-const int motorB1 = 10;
-const int motorB2 = 11;
-const int linePins[] = {A0, A1, A2, A3, A4, A5, A6, A7};
+// ==== [ Motor Pins ] ========================================================
+const int motorA1 = 6; // Motor A1 LF
+const int motorA2 = 9; // Motor A2 LB
+const int motorB1 = 10; // Motor B1 RF
+const int motorB2 = 11; // Motor B2 RB
 
-const int gripperPin = 5;
+// ==== [ Line Sensor Pins ] ===================================================
+const int linePins[] = {A0, A1, A2, A3, A4, A5, A6, A7}; // 8 Line sensors
 
-const int lineThreshold = 700;
+// ==== [ Gripper Pin ] ========================================================
+const int gripperPin = 5; // Gripper servo
+
+// ==== [ Line Sensor Threshold ] ==============================================
+const int lineThreshold = 700; // 0-1023
 int heavyTurnAdjustment = 255;
 int hardTurnAdjustment = 175;
 int strongTurnAdjustment = 125;
-int veerAdjustment = 25;
+int veerAdjustment = 25; //
 
-// Base speed of the robot
+// ==== [ Motor Speeds ] =======================================================
 const int baseSpeed = 255;
 const int startSpeed = 210; 
 
 /*///////////////// setup /////////////////*/
 
 void setup() {
-  // Initialize motor control pins as outputs
-  gripperOpen();
+  pinMode(linePins[0], INPUT);
+  pinMode(linePins[1], INPUT);
+  pinMode(linePins[2], INPUT);
+  pinMode(linePins[3], INPUT);
+  pinMode(linePins[4], INPUT);
+  pinMode(linePins[5], INPUT);
+  pinMode(linePins[6], INPUT);
+  pinMode(linePins[7], INPUT);
+
   pinMode(motorA1, OUTPUT);
   pinMode(motorA2, OUTPUT);
   pinMode(motorB1, OUTPUT);
   pinMode(motorB2, OUTPUT);
+
   pinMode(gripperPin, OUTPUT);
 
+  // Initialize motor control pins as outputs
+  gripperOpen();
   analogWrite(motorA1, startSpeed);
   analogWrite(motorB1, startSpeed);
   digitalWrite(motorA2, LOW);
