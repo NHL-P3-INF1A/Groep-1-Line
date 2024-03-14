@@ -24,11 +24,11 @@ int hardTurnAdjustment = 175;
 int strongTurnAdjustment = 125;
 int veerAdjustment = 25;
 
-//Lampjes
-int lampjes = 13;
-
-const int ORANGE[] = {255, 80, 0};
-const int GREEN[] = {0, 255, 0};
+const int RED[]                 = {255, 0, 0};
+const int GREEN[]               = {0, 255, 0};
+const int BLUE[]                = {0, 0, 255};
+const int ORANGE[]              = {255, 80, 0};
+const int WHITE[]               = {255, 255, 255};
 
 // Base speed of the robot
 const int baseSpeed = 255;
@@ -39,10 +39,9 @@ const int startSpeed = 210;
 void setup() {
   // Initialize motor control pins as outputs
   gripperOpen();
-  turnOnLED(0, 255, 80, 0); // Green
-  turnOnLED(1, 0, 255, 0); // Green
-  turnOnLED(2, 0, 255, 0); // Green
-  turnOnLED(3, 255, 80, 0); // Green
+  turnOnLED(2, BLUE[0], BLUE[1], BLUE[2]);
+  turnOnLED(3, BLUE[0], BLUE[1], BLUE[2]);
+  
   pinMode(motorA1, OUTPUT);
   pinMode(motorA2, OUTPUT);
   pinMode(motorB1, OUTPUT);
@@ -120,13 +119,21 @@ void loop() {
     analogWrite(motorB1, baseSpeed);
     turnOnLED(0, 255, 0, 0); 
   } else if (farLeftOnLine) {
-    // Hard right turn
-    analogWrite(motorA1, baseSpeed - hardTurnAdjustment); // Even slower left motor
+    // Hard left turn
+    analogWrite(motorA1, baseSpeed - hardTurnAdjustment); 
     analogWrite(motorB1, baseSpeed - 50);
+    turnOnLED(0, ORANGE[0], ORANGE[1], ORANGE[2]);
+    turnOnLED(1, BLUE[0], BLUE[1], BLUE[2]);
+    turnOnLED(2, BLUE[0], BLUE[1], BLUE[2]);
+    turnOnLED(3, ORANGE[0], ORANGE[1], ORANGE[2]);
   } else if (lessFarLeftOnLine) {
-    // Strong right turn
+    // Strong left turn
     analogWrite(motorA1, baseSpeed - strongTurnAdjustment);
     analogWrite(motorB1, baseSpeed - 35);
+    turnOnLED(0, ORANGE[0], ORANGE[1], ORANGE[2]);
+    turnOnLED(1, BLUE[0], BLUE[1], BLUE[2]);
+    turnOnLED(2, BLUE[0], BLUE[1], BLUE[2]);
+    turnOnLED(3, ORANGE[0], ORANGE[1], ORANGE[2]);
   } else if (evenlessFarLeftOnLine) {
     // Veer left
     analogWrite(motorA1, baseSpeed);
@@ -136,13 +143,21 @@ void loop() {
     analogWrite(motorA1, baseSpeed - veerAdjustment);
     analogWrite(motorB1, baseSpeed);
   } else if (lessFarRightOnLine) {
-    // Strong left turn
+    // Strong right turn
     analogWrite(motorA1, baseSpeed - 35);
     analogWrite(motorB1, baseSpeed - strongTurnAdjustment * 2);
+    turnOnLED(0, BLUE[0], BLUE[1], BLUE[2]);
+    turnOnLED(1, ORANGE[0], ORANGE[1], ORANGE[2]);
+    turnOnLED(2, ORANGE[0], ORANGE[1], ORANGE[2]);
+    turnOnLED(3, BLUE[0], BLUE[1], BLUE[2]);
   } else if (farRightOnLine) {
-    // Hard left turn
+    // Hard right turn
     analogWrite(motorA1, baseSpeed - 50);
     analogWrite(motorB1, baseSpeed - hardTurnAdjustment * 2);
+    turnOnLED(0, BLUE[0], BLUE[1], BLUE[2]);
+    turnOnLED(1, ORANGE[0], ORANGE[1], ORANGE[2]);
+    turnOnLED(2, ORANGE[0], ORANGE[1], ORANGE[2]);
+    turnOnLED(3, BLUE[0], BLUE[1], BLUE[2]);
   }
   else if (extremeLeft && !sensors3And4Active) {
     // Lost the line to the extreme left - rotate heavy
