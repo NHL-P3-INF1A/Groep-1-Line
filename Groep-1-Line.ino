@@ -4,6 +4,25 @@
 #define motorB1                 10  // Motor B1 RF
 #define motorB2                 11  // Motor B2 RB
 
+// ==== [ Lights ] =============================================================
+const int RED[]                 = {255, 0, 0};
+const int GREEN[]               = {0, 255, 0};
+const int BLUE[]                = {0, 0, 255};
+const int ORANGE[]              = {255, 80, 0};
+const int WHITE[]               = {255, 255, 255};
+
+// ==== [ LED Pins ] ===========================================================
+#include <Adafruit_NeoPixel.h>
+#define   LED_PIN                 13   // Pin that the neopixels are connected to
+#define   LED_COUNT               4   // Amount of LEDs
+#define   BRIGHTNESS 50  // NeoPixel brightness (0-255)
+Adafruit_NeoPixel strip(LED_COUNT, LED_PIN, NEO_RGB + NEO_KHZ800);
+
+#define   LED_LEFT_BACK           0   // Left Back
+#define   LED_RIGHT_BACK          1   // Right Back
+#define   LED_RIGHT_FRONT         2   // Right Front
+#define   LED_LEFT_FRONT          3   // Left Front
+
 // ==== [ Line Sensor Pins ] ===================================================
 const int linePins[] = {A0, A1, A2, A3, A4, A5, A6, A7}; // 8 Line sensors
 
@@ -51,6 +70,14 @@ void gripperClose() {
   moveGripper(1050);
 }
 
+void setupLights(){
+  strip.begin();
+  strip.setBrightness(BRIGHTNESS);
+  strip.show();
+  turnOnLED(2, BLUE[0], BLUE[1], BLUE[2]);
+  turnOnLED(3, BLUE[0], BLUE[1], BLUE[2]);
+}
+
 void moveGripper(int pulseDuration) {
   for (int i = 0; i < 10; i++) {
     delay(20);
@@ -76,6 +103,12 @@ void initializeMotors() {
   analogWrite(motorA2, 0);
   analogWrite(motorB2, 0);
   delay(1000);
+}
+
+void turnOnLED(int led, uint8_t red, uint8_t green, uint8_t blue) {
+  // Set the color of the specified LED
+  strip.setPixelColor(led, red, green, blue);
+  strip.show();
 }
 
 // ==== [ Loop ] ===============================================================
@@ -114,18 +147,24 @@ void determineLineFollowing(int sensorValues[]) {
     }
   } else if (farLeftOnLine) {
     hardRightTurn();
+    lightRight();
   } else if (lessFarLeftOnLine) {
     strongRightTurn();
+    lightRight(); 
   } else if (lessFarRightOnLine) {
     strongLeftTurn();
+    lightsLeft();
   } else if (farRightOnLine) {
     hardLeftTurn();
+    lightsLeft();
   }
 
   if (extremeLeft && !sensors3And4Active) {
     rotateHeavyLeft();
+    lightsLeft();
   } else if (extremeRight && !sensors3And4Active) {
     rotateHeavyRight();
+    lightRight();
   } else if (allCenterSensorsActive) {
     moveForward();
   }
@@ -197,4 +236,18 @@ void moveForward() {
   }
   digitalWrite(motorA2, LOW);
   digitalWrite(motorB2, LOW);
+}
+
+void lightsLeft() {
+  turnOnLED(0, ORANGE[0], ORANGE[1], ORANGE[2]);
+  turnOnLED(1, BLUE[0], BLUE[1], BLUE[2]);
+  turnOnLED(2, BLUE[0], BLUE[1], BLUE[2]);
+  turnOnLED(3, ORANGE[0], ORANGE[1], ORANGE[2]);
+}
+
+void lightRight() {
+  turnOnLED(0, BLUE[0], BLUE[1], BLUE[2]);
+  turnOnLED(1, ORANGE[0], ORANGE[1], ORANGE[2]);
+  turnOnLED(2, ORANGE[0], ORANGE[1], ORANGE[2]);
+  turnOnLED(3, BLUE[0], BLUE[1], BLUE[2]);
 }
