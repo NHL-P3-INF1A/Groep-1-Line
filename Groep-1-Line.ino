@@ -21,6 +21,14 @@ const int linePins[] = {A0, A1, A2, A3, A4, A5, A6, A7}; // 8 Line sensors
 #define baseSpeed               255 // The base speed of the motors
 #define startSpeed              210 // The speed of the motors when starting
 
+// ==== [ Echo Sensor Pins ] ===================================================
+#define TRIG_PIN 8
+#define ECHO_PIN 7
+
+#define MAX_DISTANCE 10 // Maximum distance in cm we want to check for the flag
+
+NewPing sonar(TRIG_PIN, ECHO_PIN, MAX_DISTANCE); 
+
 // ==== [ Setup ] ==============================================================
 void setup() {
   setupLineSensors();
@@ -80,9 +88,16 @@ void initializeMotors() {
 
 // ==== [ Loop ] ===============================================================
 void loop() {
-  int sensorValues[8];
-  readLineSensors(sensorValues);
-  determineLineFollowing(sensorValues);
+  int distance = sonar.ping_cm(); 
+  if (distance != 0 && distance < MAX_DISTANCE){ 
+    // Flag detected Start the rest of your robot logic
+    int sensorValues[8]; 
+    readLineSensors(sensorValues); 
+    determineLineFollowing(sensorValues); 
+  } else {
+    // Wait a bit before re-checking the distance
+    delay(50); 
+  } 
 }
 
 void readLineSensors(int sensorValues[]) {
@@ -128,6 +143,11 @@ void determineLineFollowing(int sensorValues[]) {
     rotateHeavyRight();
   } else if (allCenterSensorsActive) {
     moveForward();
+  }
+
+  if (isObstacleDetected()) {
+    stopMotors();  // Stop moving forward 
+    performObstacleAvoidance();  // We'll create this function next
   }
 }
 
@@ -197,4 +217,21 @@ void moveForward() {
   }
   digitalWrite(motorA2, LOW);
   digitalWrite(motorB2, LOW);
+}
+
+bool isObstacleDetected() {
+  int distance = sonar.ping_cm();
+  if (distance != 0 && distance < 8) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+void performObstacleAvoidance() {
+  // Simple example - turn right for a bit, then resume
+  strongRightTurn();
+  delay(1000); // Adjust the time as needed
+  goStraight();
+  delay(500); 
 }
