@@ -164,10 +164,10 @@ void determineLineFollowing(int sensorValues[]) {
   bool allCenterSensorsActive = lessFarLeftOnLine && evenlessFarLeftOnLine && evenlessFarRightOnLine && lessFarRightOnLine;
   bool allBlack = extremeLeft && farLeftOnLine && lessFarLeftOnLine && evenlessFarLeftOnLine && extremeRight && farRightOnLine && lessFarRightOnLine && evenlessFarRightOnLine;
 
-  if (blackCheck) {
+  if (!blackCheck) {
     goStraight(300);
     delay(300);
-    if (blackCheck) {
+    if (!blackCheck) {
       stopMotors();
       gripperOpen();
       goBack(1000);
