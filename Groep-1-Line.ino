@@ -83,10 +83,8 @@ void loop() {
       Serial.println("Waiting before re-checking distance.");
       delay(150); 
     }
-  } else {
-    int sensorValues[8]; 
-    readLineSensors(sensorValues); 
-    determineLineFollowing(sensorValues);
+  } else { 
+    determineLineFollowing();
     if (isObstacleDetected() && obstacleAvoided == false) {
       performObstacleAvoidance();
       obstacleAvoided = true;
@@ -151,7 +149,10 @@ void readLineSensors(int sensorValues[]) {
   }
 }
 
-void determineLineFollowing(int sensorValues[]) {
+void determineLineFollowing() {
+  int sensorValues[8]; 
+  readLineSensors(sensorValues);
+
   bool extremeLeft = sensorValues[0] > LINETHRESHOLD;
   bool farLeftOnLine = sensorValues[1] > LINETHRESHOLD;
   bool lessFarLeftOnLine = sensorValues[2] > LINETHRESHOLD;
@@ -162,21 +163,22 @@ void determineLineFollowing(int sensorValues[]) {
   bool evenlessFarRightOnLine = sensorValues[4] > LINETHRESHOLD;
   bool sensors3And4Active = sensorValues[3] > LINETHRESHOLD && sensorValues[4] > LINETHRESHOLD;
   bool allCenterSensorsActive = lessFarLeftOnLine && evenlessFarLeftOnLine && evenlessFarRightOnLine && lessFarRightOnLine;
-  bool allBlack = extremeLeft && farLeftOnLine && lessFarLeftOnLine && evenlessFarLeftOnLine && extremeRight && farRightOnLine && lessFarRightOnLine && evenlessFarRightOnLine;
 
-  if (!blackCheck) {
-    goStraight(300);
-    delay(300);
-    if (!blackCheck) {
+if (blackCheck()) {
+  goStraight(10);
+  delay(300);
+  if (blackCheck()) {
+    stopMotors();
+    goBack(200);
+    gripperOpen();
+    goBack(1000);
+    bool i = true;
+    while (i == true) {
       stopMotors();
-      gripperOpen();
-      goBack(1000);
-      bool i = true;
-      while (i = true){
-        stopMotors();
-      }
     }
-  } else if (farLeftOnLine) {
+  } 
+}
+  else if (farLeftOnLine) {
     goRight(HARDTURNADJUSTMENT);
   } else if (lessFarLeftOnLine) {
     goRight(STRONGTURNADJUSTMENT);
@@ -193,15 +195,16 @@ void determineLineFollowing(int sensorValues[]) {
   }
 }
 
-bool blackCheck(int sensorValues[]) {
-  return (sensorValues[1] > LINETHRESHOLD) 
-    && (sensorValues[2] > LINETHRESHOLD) 
-    && (sensorValues[3] > LINETHRESHOLD) 
-    && (sensorValues[4] > LINETHRESHOLD) 
-    && (sensorValues[5] > LINETHRESHOLD) 
-    && (sensorValues[6] > LINETHRESHOLD) 
-    && (sensorValues[7] > LINETHRESHOLD) 
-    && (sensorValues[0] > LINETHRESHOLD);
+bool blackCheck() {
+  Serial.println("Checking if all sensors are black."); 
+  int sensorValues[8]; 
+  readLineSensors(sensorValues);
+  for (int i = 0; i < 8; i++) {
+    if (sensorValues[i] < LINETHRESHOLD) {
+      return false;
+    }
+  }
+  return true;
 }
 
 // ==== [ Move Functions ] ====================================================
@@ -254,7 +257,7 @@ void moveForward() {
 
 bool isObstacleDetected() {
   int distance = sonar.ping_cm();
-  if (distance != 0 && distance < 20) {
+  if (distance != 0 && distance < 40) {
     return true;
   } else {
     return false;
