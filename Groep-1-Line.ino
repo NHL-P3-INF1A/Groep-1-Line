@@ -209,19 +209,21 @@ bool blackCheck() {
 
 // ==== [ Move Functions ] ====================================================
 
-void goStraight() {
+void goStraight(int delayTime) {
   analogWrite(LEFTFORWARD, BASESPEED);
   analogWrite(RIGHTFORWARD, BASESPEED);
   digitalWrite(LEFTBACK, 0);
   digitalWrite(RIGHTBACK, 0);
+  delay(delayTime);
   Serial.println("Going straight.");
 }
 
-void goBack() {
+void goBack(int delayTime) {
   analogWrite(LEFTFORWARD, 0);
   analogWrite(RIGHTFORWARD, 0);
   digitalWrite(LEFTBACK, BASESPEED);
   digitalWrite(RIGHTBACK, BASESPEED);
+  delay(delayTime);
   Serial.println("Going back.");
 }
 
