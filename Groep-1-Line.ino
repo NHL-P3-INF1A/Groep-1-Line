@@ -265,12 +265,58 @@ bool isObstacleDetected() {
 }
 
 void performObstacleAvoidance() {
-  goRight(HARDTURNADJUSTMENT);
-  Serial.println("Performing obstacle avoidance: turning right.");
-  delay(2500);
-  Serial.println("Obstacle avoided: going back to line.");
-  goLeft(HARDTURNADJUSTMENT);
-  delay(500); 
+  stopMotors();
+  unsigned long startTime = millis();
+  goBack();
+  while (millis() - startTime < 250) {
+  }
+
+  startTime = millis();
+  while (millis() - startTime < 1000) {
+    analogWrite(motorA2, 160);
+    analogWrite(motorB1, 255); 
+    analogWrite(motorB2, 0);
+    analogWrite(motorA1, 0);
+  }
+
+  bool blackDetected = false;
+
+  while (!blackDetected) {
+    startTime = millis();
+    while (millis() - startTime < 500){
+      readSensors();
+      if (anyBlack()) {
+        blackDetected = true;
+        break; 
+      }
+      analogWrite(motorA2, 255); 
+      analogWrite(motorB1, 150); 
+      analogWrite(motorB2, 0);
+      analogWrite(motorA1, 0);
+    }
+
+    if (!blackDetected) {
+      while (!anyBlack()) {
+        analogWrite(motorA2, 255); 
+        analogWrite(motorB1, 120); 
+        analogWrite(motorB2, 0);
+        analogWrite(motorA1, 0);
+        readSensors();
+      }
+    }
+  }
+
+  stopDriving();
+  lastSensor = 1;
+}
+
+bool anyBlack() {
+  for (int i = 0; i < 8; i++) {
+    if (lineSensorValue[i] >= colorBlack) {
+      return true;
+    }
+  }
+  return false;
 }
 
 // ==== [ LED Functions ] ======================================================
@@ -308,4 +354,8 @@ void moveGripper(int pulseDuration) {
     delayMicroseconds(pulseDuration);
     digitalWrite(GRIPPERPIN, LOW);
   }
+}
+
+void goAroundObject() 
+{
 }
