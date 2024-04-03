@@ -69,7 +69,6 @@ void setup() {
 
 void loop() {
   static bool flagDetected = false;
-  static bool obstacleAvoided = false;
   
   if (!flagDetected) {
     int distance = sonar.ping_cm();
@@ -86,9 +85,8 @@ void loop() {
     }
   } else { 
     determineLineFollowing();
-    if (isObstacleDetected() && obstacleAvoided == false) {
+    if (isObstacleDetected()) {
       performObstacleAvoidance();
-      obstacleAvoided = true;
     }
   }
 }
@@ -134,10 +132,8 @@ void initializeMotors() {
   int blackLineSum = 0;
   int blackLineCount = 0;
   
-  for (int i = 0; i < 3; i++)
-  {
-    do
-    {
+  for (int i = 0; i < 3; i++) {
+    do {
       digitalWrite(TRIG_PIN, HIGH);
       delayMicroseconds(10);
       digitalWrite(TRIG_PIN, LOW);
@@ -150,19 +146,14 @@ void initializeMotors() {
     setupLights();
     goStraight(0);
   
-    while(blackLineCount < 4)
-    {
-      while (true)
-      {
-        if (analogRead(sensorValues[3]) > LINETHRESHOLD)
-        {
+    while(blackLineCount < 4) {
+      while (true) {
+        if (analogRead(sensorValues[3]) > LINETHRESHOLD) {
           break;
         }
       }
-      while (true)
-      {
-        if (analogRead(sensorValues[3]) < LINETHRESHOLD)
-        {
+      while (true) {
+        if (analogRead(sensorValues[3]) < LINETHRESHOLD) {
           break;
         }
       }
@@ -180,24 +171,20 @@ void initializeMotors() {
 
       goRight(HEAVYTURNADJUSTMENT);
       delay(500);
-      while(true)
-      {
-        if(analogRead(sensorValues[4]) > LINETHRESHOLD)
-        {
+      while(true) {
+        if(analogRead(sensorValues[4]) > LINETHRESHOLD) {
           break;
         }
       }
   stopMotors();
 }
 
-int getAverageLightValue()
-{
+int getAverageLightValue() {
   int sensorValues[8]; 
   readLineSensors(sensorValues);
 
   int sum = 0;
-  for (int i = 0; i < 8; i++)
-  {
+  for (int i = 0; i < 8; i++) {
     sum += analogRead(sensorValues[i]);
   }
   return sum / 8;
