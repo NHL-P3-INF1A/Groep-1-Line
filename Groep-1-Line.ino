@@ -307,11 +307,6 @@ void stopMotors() {
   Serial.println("Stopping motors.");
 }
 
-void moveForward() {
-  digitalWrite(LEFTBACK, BASESPEED);
-  digitalWrite(RIGHTBACK, BASESPEED);
-}
-
 // ==== [ Obstacle Avoidance ] =================================================
 
 bool isObstacleDetected() {
