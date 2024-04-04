@@ -276,7 +276,6 @@ void moveForward() {
   digitalWrite(RIGHTBACK, BASESPEED);
 }
 
-
 // ==== [ LED Functions ] ======================================================
 
 void lightsLeft() {
