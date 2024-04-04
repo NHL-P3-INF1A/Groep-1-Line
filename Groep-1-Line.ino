@@ -24,7 +24,7 @@ const int linePins[]            = {A0, A1, A2, A3, A4, A5, A6, A7}; // 8 Line se
 
 int distance;
 int LINETHRESHOLD               = 700; // 0-1023
-#define HEAVYTURNADJUSTMENT     200
+#define HEAVYTURNADJUSTMENT     255
 #define HARDTURNADJUSTMENT      150
 #define STRONGTURNADJUSTMENT    75
 #define VEERADJUSTMENT          25
@@ -63,6 +63,10 @@ void setup() {
   setupLineSensors();
   setupMotorPins();
   setupLights();
+  analogWrite(LEFTFORWARD, 0);
+  analogWrite(RIGHTFORWARD, 0);
+  analogWrite(LEFTBACK, 0);
+  analogWrite(RIGHTBACK, 0);
 }
 
 // ==== [ Loop ] ===============================================================
@@ -77,10 +81,10 @@ void loop() {
     if (distance > TRIGGER_DISTANCE) {
       Serial.println("Flag detected. Starting robot logic.");
       gripperOpen();
+      LightsStart();
       initializeMotors();
       flagDetected = true;
     } else {
-      Serial.println("Waiting before re-checking distance.");
       delay(150); 
     }
   } else { 
@@ -131,51 +135,44 @@ void initializeMotors() {
   
   int blackLineSum = 0;
   int blackLineCount = 0;
+  setupLights();
+  analogWrite(LEFTFORWARD, 240);
+  analogWrite(RIGHTFORWARD, 255);
   
-  for (int i = 0; i < 3; i++) {
-    do {
-      digitalWrite(TRIG_PIN, HIGH);
-      delayMicroseconds(10);
-      digitalWrite(TRIG_PIN, LOW);
-    
-      long duration = pulseIn(ECHO_PIN, HIGH);
-      distance = duration * 0.034 / 2;
-    }  
-      while(distance > 24);
-  }
-    setupLights();
-    goStraight(0);
-  
-    while(blackLineCount < 4) {
-      while (true) {
-        if (analogRead(sensorValues[3]) > LINETHRESHOLD) {
-          break;
-        }
+  while(blackLineCount < 4) {
+    while (true) {
+      if (analogRead(sensorValues[3]) > LINETHRESHOLD) {
+        break;
       }
-      while (true) {
-        if (analogRead(sensorValues[3]) < LINETHRESHOLD) {
-          break;
-        }
-      }
-        blackLineSum += getAverageLightValue();    
-        blackLineCount++; 
     }
-      stopMotors();
-
-    LINETHRESHOLD = blackLineSum / blackLineCount;
-
-    Serial.print("New LINETHRESHOLD: ");
-    Serial.println(LINETHRESHOLD);
-    delay(10);
-    gripperClose();
-
-      goRight(HEAVYTURNADJUSTMENT);
-      delay(500);
-      while(true) {
-        if(analogRead(sensorValues[4]) > LINETHRESHOLD) {
-          break;
-        }
+    while (true) {
+      
+      if (analogRead(sensorValues[3]) < LINETHRESHOLD) {
+        break;
       }
+    }
+      blackLineSum += getAverageLightValue();    
+      blackLineCount++; 
+  }
+    stopMotors();
+
+  LINETHRESHOLD = blackLineSum / blackLineCount;
+
+  Serial.print("New LINETHRESHOLD: ");
+  Serial.println(LINETHRESHOLD);
+  delay(10);
+  gripperClose();
+
+    analogWrite(LEFTFORWARD, 0);
+    analogWrite(RIGHTFORWARD, 180);
+    analogWrite(LEFTBACK, 180);
+    analogWrite(RIGHTBACK, 0);
+    delay(500);
+    while(true) {
+      if(analogRead(sensorValues[4]) > LINETHRESHOLD) {
+        break;
+      }
+    }
   stopMotors();
 }
 
@@ -213,10 +210,10 @@ void determineLineFollowing() {
   bool sensors3And4Active = sensorValues[3] > LINETHRESHOLD && sensorValues[4] > LINETHRESHOLD;
   bool allCenterSensorsActive = lessFarLeftOnLine && evenlessFarLeftOnLine && evenlessFarRightOnLine && lessFarRightOnLine;
 
-if (blackCheck()) {
+if (allBlackCheck()) {
   goStraight(10);
   delay(300);
-  if (blackCheck()) {
+  if (allBlackCheck()) {
     LightsEnd();
     stopMotors();
     goBack(300);
@@ -229,24 +226,23 @@ if (blackCheck()) {
   } 
 }
   else if (farLeftOnLine) {
-    goRight(HARDTURNADJUSTMENT);
-  } else if (lessFarLeftOnLine) {
-    goRight(STRONGTURNADJUSTMENT);
-  } else if (lessFarRightOnLine) {
-    goLeft(STRONGTURNADJUSTMENT);
-  } else if (farRightOnLine) {
     goLeft(HARDTURNADJUSTMENT);
+  } else if (lessFarLeftOnLine) {
+    goLeft(STRONGTURNADJUSTMENT);
+  } else if (lessFarRightOnLine) {
+    goRight(STRONGTURNADJUSTMENT);
+  } else if (farRightOnLine) {
+    goRight(HARDTURNADJUSTMENT);
   }
 
   if (extremeLeft && !sensors3And4Active) {
-    goRight(HEAVYTURNADJUSTMENT);
-  } else if (extremeRight && !sensors3And4Active) {
     goLeft(HEAVYTURNADJUSTMENT);
+  } else if (extremeRight && !sensors3And4Active) {
+    goRight(HEAVYTURNADJUSTMENT);
   }
 }
 
-bool blackCheck() {
-  Serial.println("Checking if all sensors are black."); 
+bool allBlackCheck() {
   int sensorValues[8]; 
   readLineSensors(sensorValues);
   for (int i = 0; i < 8; i++) {
@@ -255,6 +251,17 @@ bool blackCheck() {
     }
   }
   return true;
+}
+
+bool anyBlackCheck() {
+  int sensorValues[8]; 
+  readLineSensors(sensorValues);
+  for (int i = 0; i < 8; i++) {
+    if (sensorValues[i] > LINETHRESHOLD) {
+      return true;
+    }
+  }
+  return false;
 }
 
 // ==== [ Move Functions ] ====================================================
@@ -277,16 +284,18 @@ void goBack(int delayTime) {
   Serial.println("Going back.");
 }
 
-void goLeft(int speedAdjustment) {
+void goRight(int speedAdjustment) {
   analogWrite(LEFTFORWARD, BASESPEED);
   analogWrite(RIGHTFORWARD, BASESPEED - speedAdjustment);
-  lightsLeft();
+  analogWrite(RIGHTBACK, 0);
+  lightsRight();
   Serial.println("Going left.");
 }
 
-void goRight(int speedAdjustment) {
+void goLeft(int speedAdjustment) {
   analogWrite(LEFTFORWARD, BASESPEED - speedAdjustment);
   analogWrite(RIGHTFORWARD, BASESPEED);
+  lightsLeft();
   Serial.println("Going right.");
 }
 
@@ -306,25 +315,41 @@ void moveForward() {
 // ==== [ Obstacle Avoidance ] =================================================
 
 bool isObstacleDetected() {
-  int distance = sonar.ping_cm();
-  if (distance != 0 && distance < 40) {
-    return true;
-  } else {
-    return false;
+  Serial.println("Checking for obstacles.");
+  static int count = 0;
+  static long downDuration;
+
+  if(millis() > downDuration) {
+    downDuration = millis() + 2;
+    int distance = sonar.ping_cm();
+    Serial.print("Distance: ");
+    Serial.println(distance);
+    if (distance > 0 && distance < 10) {
+      count++;
+    }
+
+    if(count >= 10) {
+      count = 0;
+      return true;
+
+      }
+    else { 
+      return false;
+      }
   }
 }
 
 void performObstacleAvoidance() {
   stopMotors();
   unsigned long startTime = millis();
-  goBack(0);
   while (millis() - startTime < 250) {
+    goBack(0);
   }
 
   startTime = millis();
   while (millis() - startTime < 1000) {
     analogWrite(LEFTFORWARD, 160);
-    analogWrite(RIGHTFORWARD, 255); 
+    analogWrite(RIGHTFORWARD, BASESPEED); 
     analogWrite(RIGHTBACK, 0);
     analogWrite(LEFTBACK, 0);
   }
@@ -333,23 +358,23 @@ void performObstacleAvoidance() {
 
   while (!blackDetected) {
     startTime = millis();
-    while (millis() - startTime < 500){
-      if (blackCheck()) {
+    while (millis() - startTime < 2000){
+      if (anyBlackCheck()) {
         blackDetected = true;
         break; 
       }
-      analogWrite(LEFTBACK, 255); 
+      analogWrite(LEFTFORWARD, BASESPEED); 
       analogWrite(RIGHTFORWARD, 150); 
       analogWrite(RIGHTBACK, 0);
-      analogWrite(LEFTFORWARD, 0);
+      analogWrite(LEFTBACK, 0);
     }
 
     if (!blackDetected) {
-      while (!blackCheck()) {
-        analogWrite(LEFTBACK, 255); 
+      while (!anyBlackCheck()) {
+        analogWrite(LEFTFORWARD, BASESPEED); 
         analogWrite(RIGHTFORWARD, 120); 
         analogWrite(RIGHTBACK, 0);
-        analogWrite(LEFTFORWARD, 0);
+        analogWrite(LEFTBACK, 0);
       }
     }
   }
@@ -364,11 +389,18 @@ void lightsLeft() {
   turnOnLED(3, ORANGE[0], ORANGE[1], ORANGE[2]);
 }
 
-void lightRight() {
+void lightsRight() {
   turnOnLED(0, BLUE[0], BLUE[1], BLUE[2]);
   turnOnLED(1, ORANGE[0], ORANGE[1], ORANGE[2]);
   turnOnLED(2, ORANGE[0], ORANGE[1], ORANGE[2]);
   turnOnLED(3, BLUE[0], BLUE[1], BLUE[2]);
+}
+
+void LightsStart() {
+  turnOnLED(0, GREEN[0], GREEN[1], GREEN[2]);
+  turnOnLED(1, GREEN[0], GREEN[1], GREEN[2]);
+  turnOnLED(2, GREEN[0], GREEN[1], GREEN[2]);
+  turnOnLED(3, GREEN[0], GREEN[1], GREEN[2]);
 }
 
 void LightsEnd() {
@@ -394,7 +426,9 @@ void moveGripper(int pulseDuration) {
   for (int i = 0; i < 10; i++) {
     delay(20);
     digitalWrite(GRIPPERPIN, HIGH);
+    delayMicroseconds(10);
     delayMicroseconds(pulseDuration);
+    delayMicroseconds(2);
     digitalWrite(GRIPPERPIN, LOW);
   }
 }
