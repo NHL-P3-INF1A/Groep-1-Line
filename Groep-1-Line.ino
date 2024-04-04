@@ -60,7 +60,7 @@ Adafruit_NeoPixel strip(LED_COUNT, LED_PIN, NEO_RGB + NEO_KHZ800);
 
 void setup() {
   setupLineSensors();
-  setupMotorPins();
+  setupMotor();
   setupGripper();
   setupLights();
   stopMotors();
@@ -105,7 +105,7 @@ void setupLineSensors() {
   }
 }
 
-void setupMotorPins() {
+void setupMotor() {
   pinMode(LEFTFORWARD, OUTPUT);
   pinMode(LEFTBACK, OUTPUT);
   pinMode(RIGHTFORWARD, OUTPUT);
