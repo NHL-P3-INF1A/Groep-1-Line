@@ -22,7 +22,6 @@ const int linePins[]            = {A0, A1, A2, A3, A4, A5, A6, A7}; // 8 Line se
 
 // ==== [ Line Sensor Threshold ] ==============================================
 
-int distance;
 int LINETHRESHOLD               = 700; // 0-1023
 #define HEAVYTURNADJUSTMENT     255
 #define HARDTURNADJUSTMENT      150
@@ -48,7 +47,7 @@ NewPing sonar(TRIG_PIN, ECHO_PIN, MAX_DISTANCE);
 
 #define   LED_PIN                13   // Pin that the neopixels are connected to
 #define   LED_COUNT              4   // Amount of LEDs
-#define   BRIGHTNESS             50  // NeoPixel brightness (0-255)
+#define   BRIGHTNESS             255  // NeoPixel brightness (0-255)
 Adafruit_NeoPixel strip(LED_COUNT, LED_PIN, NEO_RGB + NEO_KHZ800);
 
 #define   LED_LEFT_BACK          0   // Left Back
@@ -59,14 +58,11 @@ Adafruit_NeoPixel strip(LED_COUNT, LED_PIN, NEO_RGB + NEO_KHZ800);
 // ==== [ Setup ] ==============================================================
 
 void setup() {
-  Serial.begin(115200);
   setupLineSensors();
   setupMotorPins();
+  setupGripper();
   setupLights();
-  analogWrite(LEFTFORWARD, 0);
-  analogWrite(RIGHTFORWARD, 0);
-  analogWrite(LEFTBACK, 0);
-  analogWrite(RIGHTBACK, 0);
+  stopMotors();
 }
 
 // ==== [ Loop ] ===============================================================
@@ -76,16 +72,13 @@ void loop() {
   
   if (!flagDetected) {
     int distance = sonar.ping_cm();
-    Serial.print("Distance: ");
-    Serial.println(distance);
     if (distance > TRIGGER_DISTANCE) {
-      Serial.println("Flag detected. Starting robot logic.");
       gripperOpen();
       LightsStart();
-      initializeMotors();
+      startProcedure();
       flagDetected = true;
     } else {
-      delay(150); 
+      stopMotors();
     }
   } else { 
     determineLineFollowing();
@@ -116,7 +109,9 @@ void setupMotorPins() {
   pinMode(LEFTBACK, OUTPUT);
   pinMode(RIGHTFORWARD, OUTPUT);
   pinMode(RIGHTBACK, OUTPUT);
+}
 
+void setupGripper() {
   pinMode(GRIPPERPIN, OUTPUT);
 }
 
@@ -124,67 +119,6 @@ void turnOnLED(int led, uint8_t red, uint8_t green, uint8_t blue) {
   // Set the color of the specified LED
   strip.setPixelColor(led, red, green, blue);
   strip.show();
-}
-
-void initializeMotors() {
-  int sensorValues[8]; 
-  readLineSensors(sensorValues);
-
-  Serial.print("Current LINETHRESHOLD: ");
-  Serial.println(LINETHRESHOLD);
-  
-  int blackLineSum = 0;
-  int blackLineCount = 0;
-  setupLights();
-  analogWrite(LEFTFORWARD, 240);
-  analogWrite(RIGHTFORWARD, 255);
-  
-  while(blackLineCount < 4) {
-    while (true) {
-      if (analogRead(sensorValues[3]) > LINETHRESHOLD) {
-        break;
-      }
-    }
-    while (true) {
-      
-      if (analogRead(sensorValues[3]) < LINETHRESHOLD) {
-        break;
-      }
-    }
-      blackLineSum += getAverageLightValue();    
-      blackLineCount++; 
-  }
-    stopMotors();
-
-  LINETHRESHOLD = blackLineSum / blackLineCount;
-
-  Serial.print("New LINETHRESHOLD: ");
-  Serial.println(LINETHRESHOLD);
-  delay(10);
-  gripperClose();
-
-    analogWrite(LEFTFORWARD, 0);
-    analogWrite(RIGHTFORWARD, 180);
-    analogWrite(LEFTBACK, 180);
-    analogWrite(RIGHTBACK, 0);
-    delay(500);
-    while(true) {
-      if(analogRead(sensorValues[4]) > LINETHRESHOLD) {
-        break;
-      }
-    }
-  stopMotors();
-}
-
-int getAverageLightValue() {
-  int sensorValues[8]; 
-  readLineSensors(sensorValues);
-
-  int sum = 0;
-  for (int i = 0; i < 8; i++) {
-    sum += analogRead(sensorValues[i]);
-  }
-  return sum / 8;
 }
 
 // ==== [ Line Following functions ] =====================================================
@@ -210,21 +144,21 @@ void determineLineFollowing() {
   bool sensors3And4Active = sensorValues[3] > LINETHRESHOLD && sensorValues[4] > LINETHRESHOLD;
   bool allCenterSensorsActive = lessFarLeftOnLine && evenlessFarLeftOnLine && evenlessFarRightOnLine && lessFarRightOnLine;
 
-if (allBlackCheck()) {
-  goStraight(10);
-  delay(300);
   if (allBlackCheck()) {
-    LightsEnd();
-    stopMotors();
-    goBack(300);
-    gripperOpen();
-    goBack(1000);
-    bool i = true;
-    while (i == true) {
+    goStraight();
+    delay(300);
+    if (allBlackCheck()) {
+      LightsEnd();
       stopMotors();
-    }
-  } 
-}
+      goBack(300);
+      gripperOpen();
+      goBack(1000);
+      bool i = true;
+      while (i == true) {
+        stopMotors();
+      }
+    } 
+  }
   else if (farLeftOnLine) {
     goLeft(HARDTURNADJUSTMENT);
   } else if (lessFarLeftOnLine) {
@@ -242,88 +176,15 @@ if (allBlackCheck()) {
   }
 }
 
-bool allBlackCheck() {
-  int sensorValues[8]; 
-  readLineSensors(sensorValues);
-  for (int i = 0; i < 8; i++) {
-    if (sensorValues[i] < LINETHRESHOLD) {
-      return false;
-    }
-  }
-  return true;
-}
-
-bool anyBlackCheck() {
-  int sensorValues[8]; 
-  readLineSensors(sensorValues);
-  for (int i = 0; i < 8; i++) {
-    if (sensorValues[i] > LINETHRESHOLD) {
-      return true;
-    }
-  }
-  return false;
-}
-
-// ==== [ Move Functions ] ====================================================
-
-void goStraight(int delayTime) {
-  analogWrite(LEFTFORWARD, BASESPEED);
-  analogWrite(RIGHTFORWARD, BASESPEED);
-  digitalWrite(LEFTBACK, 0);
-  digitalWrite(RIGHTBACK, 0);
-  delay(delayTime);
-  Serial.println("Going straight.");
-}
-
-void goBack(int delayTime) {
-  analogWrite(LEFTFORWARD, 0);
-  analogWrite(RIGHTFORWARD, 0);
-  digitalWrite(LEFTBACK, BASESPEED);
-  digitalWrite(RIGHTBACK, BASESPEED);
-  delay(delayTime);
-  Serial.println("Going back.");
-}
-
-void goRight(int speedAdjustment) {
-  analogWrite(LEFTFORWARD, BASESPEED);
-  analogWrite(RIGHTFORWARD, BASESPEED - speedAdjustment);
-  analogWrite(RIGHTBACK, 0);
-  lightsRight();
-  Serial.println("Going left.");
-}
-
-void goLeft(int speedAdjustment) {
-  analogWrite(LEFTFORWARD, BASESPEED - speedAdjustment);
-  analogWrite(RIGHTFORWARD, BASESPEED);
-  lightsLeft();
-  Serial.println("Going right.");
-}
-
-void stopMotors() {
-  analogWrite(LEFTFORWARD, 0);
-  analogWrite(RIGHTFORWARD, 0);
-  analogWrite(LEFTBACK, 0);
-  analogWrite(RIGHTBACK, 0);
-  Serial.println("Stopping motors.");
-}
-
-void moveForward() {
-  digitalWrite(LEFTBACK, BASESPEED);
-  digitalWrite(RIGHTBACK, BASESPEED);
-}
-
 // ==== [ Obstacle Avoidance ] =================================================
 
 bool isObstacleDetected() {
-  Serial.println("Checking for obstacles.");
   static int count = 0;
   static long downDuration;
 
   if(millis() > downDuration) {
     downDuration = millis() + 2;
     int distance = sonar.ping_cm();
-    Serial.print("Distance: ");
-    Serial.println(distance);
     if (distance > 0 && distance < 10) {
       count++;
     }
@@ -348,10 +209,7 @@ void performObstacleAvoidance() {
 
   startTime = millis();
   while (millis() - startTime < 1000) {
-    analogWrite(LEFTFORWARD, 160);
-    analogWrite(RIGHTFORWARD, BASESPEED); 
-    analogWrite(RIGHTBACK, 0);
-    analogWrite(LEFTBACK, 0);
+    goLeft(160);
   }
 
   bool blackDetected = false;
@@ -363,22 +221,58 @@ void performObstacleAvoidance() {
         blackDetected = true;
         break; 
       }
-      analogWrite(LEFTFORWARD, BASESPEED); 
-      analogWrite(RIGHTFORWARD, 150); 
-      analogWrite(RIGHTBACK, 0);
-      analogWrite(LEFTBACK, 0);
+      goRight(150);
     }
 
     if (!blackDetected) {
       while (!anyBlackCheck()) {
-        analogWrite(LEFTFORWARD, BASESPEED); 
-        analogWrite(RIGHTFORWARD, 120); 
-        analogWrite(RIGHTBACK, 0);
-        analogWrite(LEFTBACK, 0);
+        goRight(120);
       }
     }
   }
 }
+
+// ==== [ Move Functions ] ====================================================
+
+void goStraight() {
+  analogWrite(LEFTFORWARD, 240);
+  analogWrite(RIGHTFORWARD, BASESPEED);
+  digitalWrite(LEFTBACK, 0);
+  digitalWrite(RIGHTBACK, 0);
+}
+
+void goBack() {
+  analogWrite(LEFTFORWARD, 0);
+  analogWrite(RIGHTFORWARD, 0);
+  digitalWrite(LEFTBACK, BASESPEED);
+  digitalWrite(RIGHTBACK, BASESPEED);
+}
+
+void goRight(int speedAdjustment) {
+  analogWrite(LEFTFORWARD, BASESPEED);
+  analogWrite(RIGHTFORWARD, BASESPEED - speedAdjustment);
+  analogWrite(RIGHTBACK, 0);
+  lightsRight();
+}
+
+void goLeft(int speedAdjustment) {
+  analogWrite(LEFTFORWARD, BASESPEED - speedAdjustment);
+  analogWrite(RIGHTFORWARD, BASESPEED);
+  lightsLeft();
+}
+
+void stopMotors() {
+  analogWrite(LEFTFORWARD, 0);
+  analogWrite(RIGHTFORWARD, 0);
+  analogWrite(LEFTBACK, 0);
+  analogWrite(RIGHTBACK, 0);
+}
+
+void moveForward() {
+  digitalWrite(LEFTBACK, BASESPEED);
+  digitalWrite(RIGHTBACK, BASESPEED);
+}
+
 
 // ==== [ LED Functions ] ======================================================
 
@@ -414,12 +308,10 @@ void LightsEnd() {
 
 void gripperOpen() {
   moveGripper(1700);
-  Serial.println("Opening gripper.");
 }
 
 void gripperClose() {
   moveGripper(1050);
-  Serial.println("Closing gripper.");
 }
 
 void moveGripper(int pulseDuration) {
@@ -431,4 +323,83 @@ void moveGripper(int pulseDuration) {
     delayMicroseconds(2);
     digitalWrite(GRIPPERPIN, LOW);
   }
+}
+
+// ==== [ Check Functions ] ===================================================
+
+bool allBlackCheck() {
+  int sensorValues[8]; 
+  readLineSensors(sensorValues);
+  for (int i = 0; i < 8; i++) {
+    if (sensorValues[i] < LINETHRESHOLD) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool anyBlackCheck() {
+  int sensorValues[8]; 
+  readLineSensors(sensorValues);
+  for (int i = 0; i < 8; i++) {
+    if (sensorValues[i] > LINETHRESHOLD) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// ==== [ Start Procedure Function ] =================================================
+
+void startProcedure() {
+  int sensorValues[8]; 
+  readLineSensors(sensorValues);
+  
+  int blackLineSum = 0;
+  int blackLineCount = 0;
+  setupLights();
+  goStraight();
+  
+  while(blackLineCount < 4) {
+    while (true) {
+      if (analogRead(sensorValues[3]) > LINETHRESHOLD) {
+        break;
+      }
+    }
+    while (true) {
+      
+      if (analogRead(sensorValues[3]) < LINETHRESHOLD) {
+        break;
+      }
+    }
+      blackLineSum += getAverageLightValue();    
+      blackLineCount++; 
+  }
+    stopMotors();
+
+  LINETHRESHOLD = blackLineSum / blackLineCount;
+
+  delay(10);
+  gripperClose();
+  goRight(180);
+  analogWrite(LEFTBACK, 180);
+  analogWrite(RIGHTBACK, 0);
+  delay(500);
+  while(true) {
+    if(analogRead(sensorValues[4]) > LINETHRESHOLD) {
+      break;
+    }
+  }
+  stopMotors();
+}
+
+int getAverageLightValue() {
+  int sensorValues[8]; 
+  readLineSensors(sensorValues);
+
+  int sum = 0;
+  for (int i = 0; i < 8; i++) {
+    sum += analogRead(sensorValues[i]);
+  }
+  return sum / 8;
 }
