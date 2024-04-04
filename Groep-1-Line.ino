@@ -176,7 +176,7 @@ void determineLineFollowing() {
   }
 }
 
-// ==== [ Obstacle Avoidance ] =================================================
+// ==== [ Obstacle Avoidance Functions ] =================================================
 
 bool isObstacleDetected() {
   static int count = 0;
