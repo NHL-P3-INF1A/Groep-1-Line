@@ -160,19 +160,19 @@ void determineLineFollowing() {
     } 
   }
   else if (farLeftOnLine) {
-    goLeft(HARDTURNADJUSTMENT);
+    goLeft(HARDTURNADJUSTMENT, 0);
   } else if (lessFarLeftOnLine) {
-    goLeft(STRONGTURNADJUSTMENT);
+    goLeft(STRONGTURNADJUSTMENT, 0);
   } else if (lessFarRightOnLine) {
-    goRight(STRONGTURNADJUSTMENT);
+    goRight(STRONGTURNADJUSTMENT, 0);
   } else if (farRightOnLine) {
-    goRight(HARDTURNADJUSTMENT);
+    goRight(HARDTURNADJUSTMENT, 0);
   }
 
   if (extremeLeft && !sensors3And4Active) {
-    goLeft(HEAVYTURNADJUSTMENT);
+    goLeft(HEAVYTURNADJUSTMENT, 0);
   } else if (extremeRight && !sensors3And4Active) {
-    goRight(HEAVYTURNADJUSTMENT);
+    goRight(HEAVYTURNADJUSTMENT, 0);
   }
 }
 
@@ -209,7 +209,7 @@ void performObstacleAvoidance() {
 
   startTime = millis();
   while (millis() - startTime < 1000) {
-    goLeft(160);
+    goLeft(160 , 0);
   }
 
   bool blackDetected = false;
@@ -221,12 +221,12 @@ void performObstacleAvoidance() {
         blackDetected = true;
         break; 
       }
-      goRight(150);
+      goRight(150, 160);
     }
 
     if (!blackDetected) {
       while (!anyBlackCheck()) {
-        goRight(120);
+        goRight(120, 160);
       }
     }
   }
@@ -248,16 +248,19 @@ void goBack() {
   digitalWrite(RIGHTBACK, BASESPEED);
 }
 
-void goRight(int speedAdjustment) {
+void goRight(int speedAdjustmentFront, int speedAdjustmentBack) {
   analogWrite(LEFTFORWARD, BASESPEED);
-  analogWrite(RIGHTFORWARD, BASESPEED - speedAdjustment);
+  analogWrite(RIGHTFORWARD, BASESPEED - speedAdjustmentFront);
   analogWrite(RIGHTBACK, 0);
+  analogWrite(LEFTBACK, speedAdjustmentBack);
   lightsRight();
 }
 
-void goLeft(int speedAdjustment) {
+void goLeft(int speedAdjustment, int speedAdjustmentBack) {
   analogWrite(LEFTFORWARD, BASESPEED - speedAdjustment);
   analogWrite(RIGHTFORWARD, BASESPEED);
+  analogWrite(LEFTBACK, 0);
+  analogWrite(RIGHTBACK, speedAdjustmentBack);
   lightsLeft();
 }
 
@@ -381,9 +384,7 @@ void startProcedure() {
 
   delay(10);
   gripperClose();
-  goRight(180);
-  analogWrite(LEFTBACK, 180);
-  analogWrite(RIGHTBACK, 0);
+  goRight(180, 180);
   delay(500);
   while(true) {
     if(analogRead(sensorValues[4]) > LINETHRESHOLD) {
