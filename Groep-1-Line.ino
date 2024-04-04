@@ -16,7 +16,7 @@ const int WHITE[]               = {255, 255, 255};
 
 // ==== [ Line Sensor Pins ] ===================================================
 const int linePins[]            = {A0, A1, A2, A3, A4, A5, A6, A7}; // 8 Line sensors
-#define SENSORSNUM             8 // Number of line sensors
+#define SENSORSNUM              8 // Number of line sensors
 
 // ==== [ Gripper Pin ] ========================================================
 #define GRIPPERPIN              5 // Gripper servo
