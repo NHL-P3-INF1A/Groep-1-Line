@@ -2,6 +2,6 @@
     "configuration": "cpu=atmega328",
     "board": "arduino:avr:nano",
     "programmer": "usbasp",
-    "port": "COM3",
+    "port": "COM4",
     "sketch": "Groep-1-Line.ino"
 }
