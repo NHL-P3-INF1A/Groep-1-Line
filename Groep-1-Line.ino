@@ -16,6 +16,7 @@ const int WHITE[]               = {255, 255, 255};
 
 // ==== [ Line Sensor Pins ] ===================================================
 const int linePins[]            = {A0, A1, A2, A3, A4, A5, A6, A7}; // 8 Line sensors
+#define SENSORSNUM             8 // Number of line sensors
 
 // ==== [ Gripper Pin ] ========================================================
 #define GRIPPERPIN              5 // Gripper servo
@@ -130,7 +131,7 @@ void readLineSensors(int sensorValues[]) {
 }
 
 void determineLineFollowing() {
-  int sensorValues[8]; 
+  int sensorValues[SENSORSNUM]; 
   readLineSensors(sensorValues);
 
   bool extremeLeft = sensorValues[0] > LINETHRESHOLD;
@@ -142,7 +143,6 @@ void determineLineFollowing() {
   bool lessFarRightOnLine = sensorValues[5] > LINETHRESHOLD;
   bool evenlessFarRightOnLine = sensorValues[4] > LINETHRESHOLD;
   bool sensors3And4Active = sensorValues[3] > LINETHRESHOLD && sensorValues[4] > LINETHRESHOLD;
-  bool allCenterSensorsActive = lessFarLeftOnLine && evenlessFarLeftOnLine && evenlessFarRightOnLine && lessFarRightOnLine;
 
   if (allBlackCheck()) {
     goStraight();
@@ -331,7 +331,7 @@ void moveGripper(int pulseDuration) {
 // ==== [ Check Functions ] ===================================================
 
 bool allBlackCheck() {
-  int sensorValues[8]; 
+  int sensorValues[SENSORSNUM]; 
   readLineSensors(sensorValues);
   for (int i = 0; i < 8; i++) {
     if (sensorValues[i] < LINETHRESHOLD) {
@@ -342,7 +342,7 @@ bool allBlackCheck() {
 }
 
 bool anyBlackCheck() {
-  int sensorValues[8]; 
+  int sensorValues[SENSORSNUM]; 
   readLineSensors(sensorValues);
   for (int i = 0; i < 8; i++) {
     if (sensorValues[i] > LINETHRESHOLD) {
@@ -355,7 +355,7 @@ bool anyBlackCheck() {
 // ==== [ Start Procedure Function ] =================================================
 
 void startProcedure() {
-  int sensorValues[8]; 
+  int sensorValues[SENSORSNUM]; 
   readLineSensors(sensorValues);
   
   int blackLineSum = 0;
@@ -395,7 +395,7 @@ void startProcedure() {
 }
 
 int getAverageLightValue() {
-  int sensorValues[8]; 
+  int sensorValues[SENSORSNUM]; 
   readLineSensors(sensorValues);
 
   int sum = 0;
