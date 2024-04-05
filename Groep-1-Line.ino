@@ -80,6 +80,7 @@ void loop() {
       flagDetected = true;
     } else {
       stopMotors();
+      delay(100);
     }
   } else { 
     determineLineFollowing();
@@ -150,9 +151,11 @@ void determineLineFollowing() {
     if (allBlackCheck()) {
       LightsEnd();
       stopMotors();
-      goBack(300);
+      goBack();
+      delay(300);
       gripperOpen();
-      goBack(1000);
+      goBack();
+      delay(1000);
       bool i = true;
       while (i == true) {
         stopMotors();
@@ -185,7 +188,7 @@ bool isObstacleDetected() {
   if(millis() > downDuration) {
     downDuration = millis() + 2;
     int distance = sonar.ping_cm();
-    if (distance > 0 && distance < 10) {
+    if (distance > 0 && distance < 14) {
       count++;
     }
 
@@ -196,6 +199,7 @@ bool isObstacleDetected() {
       }
     else { 
       return false;
+      delay(100);
       }
   }
 }
@@ -204,12 +208,15 @@ void performObstacleAvoidance() {
   stopMotors();
   unsigned long startTime = millis();
   while (millis() - startTime < 250) {
-    goBack(0);
+    goBack();
   }
 
   startTime = millis();
   while (millis() - startTime < 1000) {
-    goLeft(160 , 0);
+    analogWrite(LEFTFORWARD, 150);
+    analogWrite(RIGHTFORWARD, 255);
+    analogWrite(RIGHTBACK, 0);
+    analogWrite(LEFTBACK, 0);
   }
 
   bool blackDetected = false;
@@ -221,15 +228,77 @@ void performObstacleAvoidance() {
         blackDetected = true;
         break; 
       }
-      goRight(150, 160);
+      analogWrite(LEFTFORWARD, 255);
+      analogWrite(RIGHTFORWARD, 130);
+      analogWrite(RIGHTBACK, 0);
+      analogWrite(LEFTBACK, 0);
     }
 
     if (!blackDetected) {
       while (!anyBlackCheck()) {
-        goRight(120, 160);
+        analogWrite(LEFTFORWARD, 255);
+        analogWrite(RIGHTFORWARD, 110);
+        analogWrite(RIGHTBACK, 0);
+        analogWrite(LEFTBACK, 0);
       }
     }
   }
+}
+
+// ==== [ Start Procedure Function ] =================================================
+
+void startProcedure() {
+  int sensorValues[SENSORSNUM]; 
+  readLineSensors(sensorValues);
+  
+  int blackLineSum = 0;
+  int blackLineCount = 0;
+  setupLights();
+  goStraight();
+  
+  while(blackLineCount < 4) {
+    while (true) {
+      if (analogRead(sensorValues[3]) > LINETHRESHOLD) {
+        break;
+      }
+    }
+    while (true) {
+      
+      if (analogRead(sensorValues[3]) < LINETHRESHOLD) {
+        break;
+      }
+    }
+      blackLineSum += getAverageLightValue();    
+      blackLineCount++; 
+  }
+    stopMotors();
+
+  LINETHRESHOLD = blackLineSum / blackLineCount;
+
+  delay(10);
+  gripperClose();
+  analogWrite(LEFTFORWARD, 0);
+  analogWrite(RIGHTFORWARD, 200);
+  analogWrite(LEFTBACK, 200);
+  analogWrite(RIGHTBACK, 0);
+  delay(500);
+  while(true) {
+    if(analogRead(sensorValues[4]) > LINETHRESHOLD) {
+      break;
+    }
+  }
+  stopMotors();
+}
+
+int getAverageLightValue() {
+  int sensorValues[SENSORSNUM]; 
+  readLineSensors(sensorValues);
+
+  int sum = 0;
+  for (int i = 0; i < 8; i++) {
+    sum += analogRead(sensorValues[i]);
+  }
+  return sum / 8;
 }
 
 // ==== [ Move Functions ] ====================================================
@@ -349,57 +418,4 @@ bool anyBlackCheck() {
     }
   }
   return false;
-}
-
-// ==== [ Start Procedure Function ] =================================================
-
-void startProcedure() {
-  int sensorValues[SENSORSNUM]; 
-  readLineSensors(sensorValues);
-  
-  int blackLineSum = 0;
-  int blackLineCount = 0;
-  setupLights();
-  goStraight();
-  
-  while(blackLineCount < 4) {
-    while (true) {
-      if (analogRead(sensorValues[3]) > LINETHRESHOLD) {
-        break;
-      }
-    }
-    while (true) {
-      
-      if (analogRead(sensorValues[3]) < LINETHRESHOLD) {
-        break;
-      }
-    }
-      blackLineSum += getAverageLightValue();    
-      blackLineCount++; 
-  }
-    stopMotors();
-
-  LINETHRESHOLD = blackLineSum / blackLineCount;
-
-  delay(10);
-  gripperClose();
-  goRight(180, 180);
-  delay(500);
-  while(true) {
-    if(analogRead(sensorValues[4]) > LINETHRESHOLD) {
-      break;
-    }
-  }
-  stopMotors();
-}
-
-int getAverageLightValue() {
-  int sensorValues[SENSORSNUM]; 
-  readLineSensors(sensorValues);
-
-  int sum = 0;
-  for (int i = 0; i < 8; i++) {
-    sum += analogRead(sensorValues[i]);
-  }
-  return sum / 8;
 }
