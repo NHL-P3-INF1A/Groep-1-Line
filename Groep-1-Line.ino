@@ -186,20 +186,23 @@ bool isObstacleDetected() {
   static long downDuration;
 
   if(millis() > downDuration) {
-    downDuration = millis() + 2;
+    downDuration = millis() + 5;
     int distance = sonar.ping_cm();
-    if (distance > 0 && distance < 14) {
+    if (distance > 0 && distance < 18) {
       count++;
     }
+    else
+    {
+      count = 0;
+    }
 
-    if(count >= 10) {
+    if(count >= 5) {
       count = 0;
       return true;
 
       }
     else { 
       return false;
-      delay(100);
       }
   }
 }
@@ -212,7 +215,7 @@ void performObstacleAvoidance() {
   }
 
   startTime = millis();
-  while (millis() - startTime < 1000) {
+  while (millis() - startTime < 1150) {
     analogWrite(LEFTFORWARD, 150);
     analogWrite(RIGHTFORWARD, 255);
     analogWrite(RIGHTBACK, 0);
