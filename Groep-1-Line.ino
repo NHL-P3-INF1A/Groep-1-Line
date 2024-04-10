@@ -334,11 +334,6 @@ void stopMotors() {
   analogWrite(RIGHTBACK, 0);
 }
 
-void moveForward() {
-  analogWrite(LEFTBACK, BASESPEED);
-  analogWrite(RIGHTBACK, BASESPEED);
-}
-
 // ==== [ LED Functions ] ======================================================
 
 void lightsLeft() {
