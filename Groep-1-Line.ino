@@ -25,7 +25,7 @@ const int linePins[]            = {A0, A1, A2, A3, A4, A5, A6, A7}; // 8 Line se
 
 int LINETHRESHOLD               = 700; // 0-1023
 #define HEAVYTURNADJUSTMENT     255
-#define HARDTURNADJUSTMENT      150
+#define HARDTURNADJUSTMENT      200
 #define STRONGTURNADJUSTMENT    75
 #define VEERADJUSTMENT          25
 
@@ -215,9 +215,9 @@ void performObstacleAvoidance() {
   }
 
   startTime = millis();
-  while (millis() - startTime < 1150) {
-    analogWrite(LEFTFORWARD, 150);
-    analogWrite(RIGHTFORWARD, 255);
+  while (millis() - startTime < 1000) {
+    analogWrite(RIGHTFORWARD, 160);
+    analogWrite(LEFTFORWARD, 255);
     analogWrite(RIGHTBACK, 0);
     analogWrite(LEFTBACK, 0);
   }
@@ -231,16 +231,16 @@ void performObstacleAvoidance() {
         blackDetected = true;
         break; 
       }
-      analogWrite(LEFTFORWARD, 255);
-      analogWrite(RIGHTFORWARD, 130);
+      analogWrite(RIGHTFORWARD, 255);
+      analogWrite(LEFTFORWARD, 130);
       analogWrite(RIGHTBACK, 0);
       analogWrite(LEFTBACK, 0);
     }
 
     if (!blackDetected) {
       while (!anyBlackCheck()) {
-        analogWrite(LEFTFORWARD, 255);
-        analogWrite(RIGHTFORWARD, 110);
+        analogWrite(RIGHTFORWARD, 255);
+        analogWrite(LEFTFORWARD, 110);
         analogWrite(RIGHTBACK, 0);
         analogWrite(LEFTBACK, 0);
       }
