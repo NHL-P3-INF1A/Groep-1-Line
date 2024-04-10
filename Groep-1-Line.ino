@@ -300,15 +300,15 @@ int getAverageLightValue() {
 void goStraight() {
   analogWrite(LEFTFORWARD, 240);
   analogWrite(RIGHTFORWARD, BASESPEED);
-  digitalWrite(LEFTBACK, 0);
-  digitalWrite(RIGHTBACK, 0);
+  analogWrite(LEFTBACK, 0);
+  analogWrite(RIGHTBACK, 0);
 }
 
 void goBack() {
   analogWrite(LEFTFORWARD, 0);
   analogWrite(RIGHTFORWARD, 0);
-  digitalWrite(LEFTBACK, BASESPEED);
-  digitalWrite(RIGHTBACK, BASESPEED);
+  analogWrite(LEFTBACK, BASESPEED);
+  analogWrite(RIGHTBACK, BASESPEED);
 }
 
 void goRight(int speedAdjustmentFront, int speedAdjustmentBack) {
@@ -335,8 +335,8 @@ void stopMotors() {
 }
 
 void moveForward() {
-  digitalWrite(LEFTBACK, BASESPEED);
-  digitalWrite(RIGHTBACK, BASESPEED);
+  analogWrite(LEFTBACK, BASESPEED);
+  analogWrite(RIGHTBACK, BASESPEED);
 }
 
 // ==== [ LED Functions ] ======================================================
@@ -382,11 +382,11 @@ void gripperClose() {
 void moveGripper(int pulseDuration) {
   for (int i = 0; i < 10; i++) {
     delay(20);
-    digitalWrite(GRIPPERPIN, HIGH);
+    analogWrite(GRIPPERPIN, HIGH);
     delayMicroseconds(10);
     delayMicroseconds(pulseDuration);
     delayMicroseconds(2);
-    digitalWrite(GRIPPERPIN, LOW);
+    analogWrite(GRIPPERPIN, LOW);
   }
 }
 
