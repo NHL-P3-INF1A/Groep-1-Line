@@ -216,10 +216,7 @@ void performObstacleAvoidance() {
 
   startTime = millis();
   while (millis() - startTime < 1000) {
-    analogWrite(RIGHTFORWARD, 160);
-    analogWrite(LEFTFORWARD, 255);
-    analogWrite(RIGHTBACK, 0);
-    analogWrite(LEFTBACK, 0);
+    goRight(95, 0);
   }
 
   bool blackDetected = false;
@@ -231,18 +228,12 @@ void performObstacleAvoidance() {
         blackDetected = true;
         break; 
       }
-      analogWrite(RIGHTFORWARD, 255);
-      analogWrite(LEFTFORWARD, 130);
-      analogWrite(RIGHTBACK, 0);
-      analogWrite(LEFTBACK, 0);
+      goLeft(125, 0);
     }
 
     if (!blackDetected) {
       while (!anyBlackCheck()) {
-        analogWrite(RIGHTFORWARD, 255);
-        analogWrite(LEFTFORWARD, 110);
-        analogWrite(RIGHTBACK, 0);
-        analogWrite(LEFTBACK, 0);
+        goLeft(105, 0);
       }
     }
   }
